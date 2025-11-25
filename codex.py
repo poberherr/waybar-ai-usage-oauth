@@ -193,7 +193,7 @@ def main() -> None:
             err_msg = str(e)
             short_err = "Auth Err" if "403" in err_msg or "401" in err_msg else "Net Err"
             print(json.dumps({
-                "text": f"<span foreground='#ff5555'> {short_err}</span>",
+                "text": f"<span foreground='#ff5555'>󰬫 {short_err}</span>",
                 "tooltip": f"Error:\n{err_msg}",
                 "class": "critical"
             }))

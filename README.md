@@ -85,7 +85,7 @@ Add the custom modules to `~/.config/waybar/config.jsonc`:
 
 ```jsonc
 {
-  "modules-right": [
+  "modules-left": [
     // ... other modules ...
     "custom/claude-usage",
     "custom/codex-usage"

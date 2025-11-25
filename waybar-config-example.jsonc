@@ -8,7 +8,8 @@
   // Claude Code Usage Monitor
   "custom/claude-usage": {
     // After 'uv tool install waybar-ai-usage':
-    "exec": "claude-usage --waybar",
+    // IMPORTANT: Use full path to work with systemd-launched Waybar
+    "exec": "~/.local/bin/claude-usage --waybar",
 
     // Or for development mode:
     // "exec": "uv run --directory /home/YOUR_USER/Codes/waybar-ai-usage python claude.py --waybar",
@@ -24,7 +25,8 @@
   // OpenAI Codex CLI Usage Monitor
   "custom/codex-usage": {
     // After 'uv tool install waybar-ai-usage':
-    "exec": "codex-usage --waybar",
+    // IMPORTANT: Use full path to work with systemd-launched Waybar
+    "exec": "~/.local/bin/codex-usage --waybar",
 
     // Or for development mode:
     // "exec": "uv run --directory /home/YOUR_USER/Codes/waybar-ai-usage python codex.py --waybar",

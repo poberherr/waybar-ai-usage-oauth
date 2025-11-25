@@ -92,7 +92,7 @@ Add the custom modules to `~/.config/waybar/config.jsonc`:
   ],
 
   "custom/claude-usage": {
-    "exec": "claude-usage --waybar",
+    "exec": "~/.local/bin/claude-usage --waybar",
     "return-type": "json",
     "interval": 120,  // Refresh every 2 minutes
     "format": "{}",
@@ -102,7 +102,7 @@ Add the custom modules to `~/.config/waybar/config.jsonc`:
   },
 
   "custom/codex-usage": {
-    "exec": "codex-usage --waybar",
+    "exec": "~/.local/bin/codex-usage --waybar",
     "return-type": "json",
     "interval": 120,
     "format": "{}",
@@ -134,7 +134,9 @@ Add to `~/.config/waybar/style.css`:
 pkill waybar && waybar &
 ```
 
-**Note**: See `waybar-config-example.jsonc` and `waybar-style-example.css` for complete configuration examples.
+**Important Notes**:
+- **Use full path `~/.local/bin/`** to ensure modules work when Waybar is launched by systemd (auto-start on login). Without the full path, modules will only work when Waybar is manually started from a terminal.
+- See `waybar-config-example.jsonc` and `waybar-style-example.css` for complete configuration examples.
 
 For **development mode**, use:
 ```jsonc

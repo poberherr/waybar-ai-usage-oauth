@@ -66,8 +66,6 @@ waybar-ai-usage cleanup --dry-run
 waybar-ai-usage setup --yes
 waybar-ai-usage cleanup --yes
 
-> Note: `setup`/`cleanup` will rewrite your Waybar config JSONC and may change formatting or remove comments. Backups are created before any write.
-
 # Claude usage
 claude-usage
 
@@ -82,6 +80,8 @@ codex-usage --waybar
 claude-usage --browser chromium --browser brave
 codex-usage --browser chromium
 ```
+
+> Note: `setup`/`cleanup` will rewrite your Waybar config JSONC and may change formatting or remove comments. Backups are created before any write.
 
 In development mode:
 ```bash
@@ -106,6 +106,10 @@ waybar-ai-usage setup
 ```
 
 This will add the required Waybar modules and styles (with backup + confirmation).
+If you want to force a specific browser order in Waybar, pass it here:
+```bash
+waybar-ai-usage setup --browser chromium --browser brave
+```
 
 #### Step 3: Restart Waybar
 
@@ -200,7 +204,8 @@ waybar-ai-usage/
 
 Contributions are welcome! Areas for improvement:
 
-- [ ] Support for Firefox, Brave, Chromium browsers
+- [x] Support for Firefox, Brave, Chromium browsers
+- [ ] Better UX for setup/cleanup (preview changes, restore helper)
 - [ ] Caching mechanism to reduce API calls
 - [ ] Additional AI service monitors
 - [ ] Better error messages

@@ -35,7 +35,7 @@ uv tool install git+https://github.com/NihilDigit/waybar-ai-usage
 git clone https://github.com/NihilDigit/waybar-ai-usage
 cd waybar-ai-usage
 uv build
-uv tool install --force dist/waybar_ai_usage-0.1.2-py3-none-any.whl
+uv tool install --force dist/waybar_ai_usage-0.1.4-py3-none-any.whl
 ```
 
 ### Method 2: Development Mode
@@ -52,6 +52,22 @@ uv sync
 
 After `uv tool install`:
 ```bash
+# Setup helper (adds modules/styles with backups + confirmation)
+waybar-ai-usage setup
+
+# Cleanup helper (removes modules/styles with backups + confirmation)
+waybar-ai-usage cleanup
+
+# Preview changes without writing
+waybar-ai-usage setup --dry-run
+waybar-ai-usage cleanup --dry-run
+
+# Skip confirmation
+waybar-ai-usage setup --yes
+waybar-ai-usage cleanup --yes
+
+> Note: `setup`/`cleanup` will rewrite your Waybar config JSONC and may change formatting or remove comments. Backups are created before any write.
+
 # Claude usage
 claude-usage
 
@@ -83,56 +99,15 @@ uv tool install waybar-ai-usage
 
 After installation, the commands `claude-usage` and `codex-usage` will be available in your PATH.
 
-#### Step 2: Configure Waybar
+#### Step 2: Run setup
 
-Add the custom modules to `~/.config/waybar/config.jsonc`:
-
-```jsonc
-{
-  "modules-left": [
-    // ... other modules ...
-    "custom/claude-usage",
-    "custom/codex-usage"
-  ],
-
-  "custom/claude-usage": {
-    "exec": "~/.local/bin/claude-usage --waybar",
-    "return-type": "json",
-    "interval": 120,  // Refresh every 2 minutes
-    "format": "{}",
-    "tooltip": true,
-    "on-click": "pkill -RTMIN+8 waybar",  // Click to refresh
-    "signal": 8
-  },
-
-  "custom/codex-usage": {
-    "exec": "~/.local/bin/codex-usage --waybar",
-    "return-type": "json",
-    "interval": 120,
-    "format": "{}",
-    "tooltip": true,
-    "on-click": "pkill -RTMIN+9 waybar",
-    "signal": 9
-  }
-}
+```bash
+waybar-ai-usage setup
 ```
 
-#### Step 3: Add styling (optional)
+This will add the required Waybar modules and styles (with backup + confirmation).
 
-Add to `~/.config/waybar/style.css`:
-
-```css
-/* See waybar-style-example.css for complete styling */
-#custom-claude-usage.claude-low { color: #a6e3a1; }
-#custom-claude-usage.claude-mid { color: #f9e2af; }
-#custom-claude-usage.claude-high { color: #f38ba8; }
-
-#custom-codex-usage.codex-low { color: #a6e3a1; }
-#custom-codex-usage.codex-mid { color: #f9e2af; }
-#custom-codex-usage.codex-high { color: #f38ba8; }
-```
-
-#### Step 4: Restart Waybar
+#### Step 3: Restart Waybar
 
 ```bash
 pkill waybar && waybar &
@@ -140,12 +115,6 @@ pkill waybar && waybar &
 
 **Important Notes**:
 - **Use full path `~/.local/bin/`** to ensure modules work when Waybar is launched by systemd (auto-start on login). Without the full path, modules will only work when Waybar is manually started from a terminal.
-- See `waybar-config-example.jsonc` and `waybar-style-example.css` for complete configuration examples.
-
-For **development mode**, use:
-```jsonc
-"exec": "uv run --directory /path/to/waybar-ai-usage python claude.py --waybar --browser chromium",
-```
 
 ## Display States
 
@@ -207,8 +176,8 @@ waybar-ai-usage/
 ├── claude.py                     # Claude Code usage monitor
 ├── codex.py                      # OpenAI Codex CLI usage monitor
 ├── pyproject.toml                # Project metadata and dependencies
-├── waybar-config-example.jsonc   # Example Waybar module configuration
-├── waybar-style-example.css      # Example Waybar styling
+├── waybar-config-example.jsonc   # Template used by setup
+├── waybar-style-example.css      # Template used by setup
 ├── LICENSE                       # MIT License
 └── README.md                     # This file
 ```

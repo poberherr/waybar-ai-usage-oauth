@@ -11,7 +11,7 @@ from typing import Callable, Iterable, Mapping, Optional
 import browser_cookie3
 
 
-DEFAULT_BROWSERS = ("chrome", "chromium", "brave", "edge", "firefox")
+DEFAULT_BROWSERS = ("chrome", "chromium", "brave", "edge", "firefox", "helium")
 
 # Cache configuration
 CACHE_DIR = Path.home() / ".cache" / "waybar-ai-usage"
@@ -100,13 +100,29 @@ def get_cached_or_fetch(
             pass
 
 
+def helium(cookie_file=None, domain_name="", key_file=None):
+    """Returns a cookiejar of the cookies used by Helium browser.
+
+    Helium is a Chromium-based browser, so we use the chromium loader
+    with Helium's cookie file path.
+    """
+    import os
+    if cookie_file is None:
+        cookie_file = os.path.expanduser("~/.config/net.imput.helium/Default/Cookies")
+    return browser_cookie3.chromium(cookie_file=cookie_file, domain_name=domain_name, key_file=key_file)
+
+
 def load_cookies(domain: str, browsers: Iterable[str] | None = None) -> tuple[dict, str]:
     """Load cookies for a domain from the first available browser in order."""
     browsers = list(browsers or DEFAULT_BROWSERS)
     errors: list[str] = []
 
     for name in browsers:
-        loader = getattr(browser_cookie3, name, None)
+        # First check if we have a local implementation (e.g., helium)
+        loader = globals().get(name)
+        if loader is None:
+            # Fall back to browser_cookie3
+            loader = getattr(browser_cookie3, name, None)
         if loader is None:
             errors.append(f"{name}: unsupported by browser_cookie3")
             continue

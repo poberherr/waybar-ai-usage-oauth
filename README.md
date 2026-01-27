@@ -289,11 +289,11 @@ python -c "import browser_cookie3; print(list(browser_cookie3.chromium(domain_na
 
 ### Using Other Browsers
 
-You can select browsers in order using `--browser` (repeatable). Without it, the default order is: `chrome`, `chromium`, `brave`, `edge`, `firefox`.
+You can select browsers in order using `--browser` (repeatable). Without it, the default order is: `chrome`, `chromium`, `brave`, `edge`, `firefox`, `helium`.
 
 ```bash
 claude-usage --browser chromium --browser brave
-codex-usage --browser chromium
+codex-usage --browser helium
 ```
 
 ## Project Structure

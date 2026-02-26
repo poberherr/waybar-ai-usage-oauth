@@ -24,9 +24,10 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/NihilDigit/waybar-ai-usage"
-Repository = "https://github.com/NihilDigit/waybar-ai-usage"
-Issues = "https://github.com/NihilDigit/waybar-ai-usage/issues"
+Homepage = "https://github.com/poberherr/waybar-ai-usage-oauth"
+Repository = "https://github.com/poberherr/waybar-ai-usage-oauth"
+Issues = "https://github.com/poberherr/waybar-ai-usage-oauth/issues"
+Upstream = "https://github.com/NihilDigit/waybar-ai-usage"
 
 [project.scripts]
 claude-usage = "claude:main"

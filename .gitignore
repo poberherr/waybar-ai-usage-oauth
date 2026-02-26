@@ -35,3 +35,9 @@ htmlcov/
 *.log
 .env
 .env.local
+
+# Credentials / secrets (safety net)
+auth.json
+*.credentials.json
+*.pem
+*.key

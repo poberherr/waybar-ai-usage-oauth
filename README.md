@@ -1,10 +1,27 @@
-# Waybar AI Usage
+# Waybar AI Usage (OAuth Fork)
+
+> **This is a fork of [NihilDigit/waybar-ai-usage](https://github.com/NihilDigit/waybar-ai-usage)** — a brilliant idea by [NihilDigit](https://github.com/NihilDigit) to bring AI coding tool usage monitoring into Waybar. This fork takes a different architectural approach: instead of browser cookies and `curl-impersonate`, it uses the native OAuth tokens that Claude Code and Codex CLI already store locally. This means fewer dependencies, no cookie scraping, and a simpler setup.
 
 Monitor **Claude Code** and **Codex CLI** usage directly in your Waybar status bar.
 
 ![showcase](https://github.com/user-attachments/assets/13e8a4a1-6778-484f-8a37-cba238aefea5)
 
 This tool displays your AI coding tool usage limits in real-time using OAuth credentials — no browser cookies or API keys needed.
+
+### Why this fork?
+
+The [original project](https://github.com/NihilDigit/waybar-ai-usage) pioneered the idea of monitoring AI usage in Waybar and works great. This fork exists because Claude Code and Codex CLI both store OAuth tokens locally, which opens up a lighter-weight approach:
+
+| | Original | This Fork |
+|---|---|---|
+| **Auth method** | Browser cookies via `browser-cookie3` | Native OAuth tokens (already on disk) |
+| **HTTP client** | `curl-cffi` / `curl-impersonate` | Plain `requests` |
+| **Dependencies** | Heavier (browser cookie extraction) | Lighter (`requests` + `json-five`) |
+| **Setup** | Extract cookies from browser | Just run the CLI tool once |
+| **Claude Code** | Supported | Supported |
+| **Codex CLI** | Supported | Supported |
+
+If the original works for your setup, use it! If you prefer the OAuth approach or want fewer dependencies, this fork is for you.
 
 ## What This Monitors
 
@@ -44,11 +61,11 @@ yay -S waybar-ai-usage
 
 ```bash
 # Install from GitHub
-uv tool install git+https://github.com/NihilDigit/waybar-ai-usage
+uv tool install git+https://github.com/poberherr/waybar-ai-usage-oauth
 
 # Or install locally for development
-git clone https://github.com/NihilDigit/waybar-ai-usage
-cd waybar-ai-usage
+git clone https://github.com/poberherr/waybar-ai-usage-oauth
+cd waybar-ai-usage-oauth
 uv build
 uv tool install --force dist/waybar_ai_usage-*-py3-none-any.whl
 ```
@@ -56,8 +73,8 @@ uv tool install --force dist/waybar_ai_usage-*-py3-none-any.whl
 ### Method 2: Development Mode
 
 ```bash
-git clone https://github.com/NihilDigit/waybar-ai-usage
-cd waybar-ai-usage
+git clone https://github.com/poberherr/waybar-ai-usage-oauth
+cd waybar-ai-usage-oauth
 uv sync
 ```
 
@@ -324,6 +341,8 @@ Contributions are welcome! Areas for improvement:
 
 - [x] Caching mechanism to reduce API calls
 - [x] OAuth-based authentication (no browser cookies)
+- [x] Codex CLI support
+- [ ] Setup helper for Codex module (`waybar_ai_usage.py` currently Claude-only)
 - [ ] Better error messages
 - [ ] More examples and screenshots
 
@@ -342,5 +361,8 @@ MIT - See [LICENSE](LICENSE) file for details.
 
 ## Acknowledgments
 
-- Originally based on [NihilDigit/waybar-ai-usage](https://github.com/NihilDigit/waybar-ai-usage)
-- Uses Claude Code OAuth credentials for reliable, cookie-free authentication
+This project would not exist without the work of others:
+
+- **[NihilDigit](https://github.com/NihilDigit)** — Created the original [waybar-ai-usage](https://github.com/NihilDigit/waybar-ai-usage) project that inspired this fork. The idea of monitoring AI coding tool usage directly in Waybar was entirely theirs, and the original project's structure, setup helper, and CSS theming all carry forward here. Thank you for building and open-sourcing it!
+- **[anthropics/claude-code](https://github.com/anthropics/claude-code)** — Claude Code stores OAuth credentials locally, making cookie-free authentication possible
+- **[openai/codex](https://github.com/openai/codex)** — Codex CLI stores OAuth credentials locally at `~/.codex/auth.json`

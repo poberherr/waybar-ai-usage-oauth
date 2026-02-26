@@ -1,29 +1,32 @@
 # Waybar AI Usage
 
-Monitor **Claude Code** and **OpenAI Codex CLI** usage directly in your Waybar status bar.
+Monitor **Claude Code** usage directly in your Waybar status bar.
 
 ![showcase](https://github.com/user-attachments/assets/13e8a4a1-6778-484f-8a37-cba238aefea5)
 
-This tool displays your AI coding assistant usage limits in real-time by reading browser cookies (Chrome by default). No API keys needed!
+This tool displays your Claude Code usage limits in real-time using OAuth credentials from Claude Code — no browser cookies or API keys needed.
 
 ## What This Monitors
 
 - **Claude Code**: Claude's AI-powered code editor
   - 5-hour usage window
   - 7-day usage window
-- **OpenAI Codex CLI**: OpenAI's command-line coding assistant
-  - Primary (5-hour) window
-  - Secondary (7-day) window
 
 ## Features
 
-- 🎨 Real-time usage percentage display
-- ⏰ Countdown timer until quota reset
-- 🚦 Color-coded warnings (green → yellow → red)
-- 🔄 Click to refresh instantly
-- 🍪 Uses browser cookies (Chrome by default, configurable) - no API key needed
-- 🎯 Special states: "Ready" (unused) and "Pause" (quota exhausted)
-- 🔁 Auto-retry on network errors
+- Real-time usage percentage display
+- Countdown timer until quota reset
+- Color-coded warnings (green → yellow → red)
+- Click to refresh instantly
+- Uses Claude Code OAuth credentials — no browser cookies needed
+- Special states: "Ready" (unused) and "Pause" (quota exhausted)
+- Auto-retry on network errors
+
+## Prerequisites
+
+- **Claude Code** must have been run at least once (creates OAuth credentials at `~/.claude/.credentials.json`)
+- **Python 3.11+**
+- **uv** package manager ([installation guide](https://docs.astral.sh/uv/getting-started/installation/))
 
 ## Installation
 
@@ -78,19 +81,11 @@ waybar-ai-usage restore --dry-run
 waybar-ai-usage setup --yes
 waybar-ai-usage cleanup --yes
 
-# Claude usage
+# Claude usage (CLI output)
 claude-usage
-
-# ChatGPT usage
-codex-usage
 
 # Waybar JSON output
 claude-usage --waybar
-codex-usage --waybar
-
-# Use a specific browser (repeatable, tried in order)
-claude-usage --browser chromium --browser brave
-codex-usage --browser chromium
 ```
 
 > Note: `setup`/`cleanup` will rewrite your Waybar config JSONC and may change formatting or remove comments. Backups are created before any write.
@@ -98,7 +93,6 @@ codex-usage --browser chromium
 In development mode:
 ```bash
 uv run python claude.py
-uv run python codex.py
 ```
 
 ### Waybar Integration
@@ -109,7 +103,7 @@ uv run python codex.py
 uv tool install waybar-ai-usage
 ```
 
-After installation, the commands `claude-usage` and `codex-usage` will be available in your PATH.
+After installation, the command `claude-usage` will be available in your PATH.
 
 #### Step 2: Run setup
 
@@ -118,10 +112,6 @@ waybar-ai-usage setup
 ```
 
 This will add the required Waybar modules and styles (with backup + confirmation).
-If you want to force a specific browser order in Waybar, pass it here:
-```bash
-waybar-ai-usage setup --browser chromium --browser brave
-```
 
 #### Step 3: Restart Waybar
 
@@ -151,7 +141,7 @@ All variables are available for both `--format` and `--tooltip-format`:
 | Variable            | Description                     | Example                               |
 | ------------------- | ------------------------------- | ------------------------------------- |
 | `{icon}`            | Service icon with color styling | `<span foreground='#DE7356'>󰜡</span>` |
-| `{icon_plain}`      | Service icon without styling    | `󰜡` (Claude) or `󰬫` (Codex)           |
+| `{icon_plain}`      | Service icon without styling    | `󰜡`                                   |
 | `{time_icon}`       | Time icon with color styling    | `<span foreground='#DE7356'>󰔚</span>` |
 | `{time_icon_plain}` | Time icon without styling       | `󰔚`                                   |
 | `{5h_pct}`          | 5-hour window percentage        | `45`                                  |
@@ -173,7 +163,7 @@ claude-usage --waybar --format "{icon_plain} {5h_pct}% {time_icon_plain} {5h_res
 claude-usage --waybar --format "{icon} 5h:{5h_pct}% 7d:{7d_pct}%"
 
 # Minimal format with just percentage
-codex-usage --waybar --format "{5h_pct}%"
+claude-usage --waybar --format "{5h_pct}%"
 
 # Custom tooltip showing both windows
 claude-usage --waybar --tooltip-format "5-Hour: {5h_pct}%  Reset: {5h_reset}\n7-Day: {7d_pct}%  Reset: {7d_reset}"
@@ -233,7 +223,7 @@ window has started:
 claude-usage --waybar --format '{?5h_reset}{5h_pct}/{5h_reset}{/5h_reset}{?5h_reset&7d_reset} - {/}{?7d_reset}{7d_pct}/{7d_reset}{/7d_reset}'
 
 # Show 5h data only when active, otherwise show nothing
-codex-usage --waybar --format '{?5h_reset}{icon} {5h_pct}% {time_icon} {5h_reset}{/5h_reset}'
+claude-usage --waybar --format '{?5h_reset}{icon} {5h_pct}% {time_icon} {5h_reset}{/5h_reset}'
 ```
 
 The first example will display:
@@ -253,70 +243,13 @@ The first example will display:
 
 ### Special States
 
-- **Ready** (󰬫/󰜡): Window hasn't been activated yet (0% usage, ~5h remaining)
-- **Pause** (󰬫/󰜡): Weekly quota exhausted (100% usage)
-
-## Requirements
-
-- **Chrome browser** (default) or another supported browser with active login
-  to:
-  - [Claude.ai](https://claude.ai) for Claude Code monitoring
-  - [ChatGPT](https://chatgpt.com) for Codex CLI monitoring
-- **Python 3.11+**
-- **uv** package manager
-  ([installation guide](https://docs.astral.sh/uv/getting-started/installation/))
-
-## Troubleshooting
-
-### "Cookie read failed" Error
-
-Make sure you're logged into Claude/ChatGPT in your chosen browser:
-
-```bash
-# Test Claude cookies
-python -c "import browser_cookie3; print(list(browser_cookie3.chromium(domain_name='claude.ai')))"
-
-# Test ChatGPT cookies
-python -c "import browser_cookie3; print(list(browser_cookie3.chromium(domain_name='chatgpt.com')))"
-```
-
-### "403 Forbidden" or "Net Err"
-
-1. Refresh the Claude/ChatGPT page in your Chrome browser
-2. Check if your IP is blocked by Cloudflare
-3. Update dependencies: `uv sync --upgrade`
-4. The tool has built-in retry (1 retry with 10s timeout)
-
-### Using Other Browsers
-
-You can select browsers in order using `--browser` (repeatable). Without it, the default order is: `chrome`, `chromium`, `brave`, `edge`, `firefox`, `helium`.
-
-```bash
-claude-usage --browser chromium --browser brave
-codex-usage --browser helium
-```
-
-## Project Structure
-
-```
-waybar-ai-usage/
-├── assets/
-│   ├── claude.svg                # Claude logo (unused in current version)
-│   └── codex.svg                 # ChatGPT/OpenAI logo (unused in current version)
-├── common.py                     # Shared utilities (time formatting, window parsing)
-├── claude.py                     # Claude Code usage monitor
-├── codex.py                      # OpenAI Codex CLI usage monitor
-├── pyproject.toml                # Project metadata and dependencies
-├── waybar-config-example.jsonc   # Template used by setup
-├── waybar-style-example.css      # Template used by setup
-├── LICENSE                       # MIT License
-└── README.md                     # This file
-```
+- **Ready** (󰜡): Window hasn't been activated yet (0% usage, ~5h remaining)
+- **Pause** (󰜡): Weekly quota exhausted (100% usage)
 
 ## How It Works
 
-1. **Cookie Extraction**: Uses `browser_cookie3` to read authentication cookies from your chosen browser
-2. **API Requests**: Makes authenticated requests to Claude.ai and ChatGPT APIs using `curl_cffi`
+1. **OAuth Token**: Reads the OAuth access token from Claude Code's credentials (`~/.claude/.credentials.json`)
+2. **API Request**: Makes an authenticated request to Anthropic's usage API
 3. **Usage Parsing**: Extracts usage percentages and reset times from API responses
 4. **Waybar Output**: Formats data as JSON for Waybar's custom module
 5. **Auto-refresh**: Waybar polls every 2 minutes (configurable via `interval`)
@@ -327,14 +260,45 @@ waybar-ai-usage/
 - **Retry**: 1 automatic retry on failure (total 2 attempts)
 - **Refresh interval**: 120 seconds (2 minutes) recommended
 
+## Troubleshooting
+
+### "No Creds" or "Token Exp" Error
+
+- Ensure Claude Code has been run at least once to create OAuth credentials
+- If the token has expired, reopen Claude Code to refresh it
+- Check that `~/.claude/.credentials.json` exists and contains `claudeAiOauth`
+
+### "Auth Err" (403/401)
+
+- Your OAuth token may have been revoked — reopen Claude Code
+- Check if your subscription is still active
+
+### "Net Err"
+
+- Check your internet connection
+- The usage API may be temporarily unavailable
+- The tool has built-in retry (1 retry with 10s timeout)
+
+## Project Structure
+
+```
+waybar-ai-usage/
+├── common.py                     # Shared utilities (caching, time formatting, output)
+├── claude.py                     # Claude Code usage monitor (OAuth-based)
+├── pyproject.toml                # Project metadata and dependencies
+├── waybar_ai_usage.py            # Setup/cleanup helper tool
+├── waybar-config-example.jsonc   # Template used by setup
+├── waybar-style-example.css      # Template used by setup
+├── LICENSE                       # MIT License
+└── README.md                     # This file
+```
+
 ## Contributing
 
 Contributions are welcome! Areas for improvement:
 
-- [x] Support for Firefox, Brave, Chromium browsers
-- [x] Better UX for setup/cleanup (preview changes, restore helper)
-- [x] Caching mechanism to reduce API calls (v0.4.0+)
-- [ ] Additional AI service monitors
+- [x] Caching mechanism to reduce API calls
+- [x] OAuth-based authentication (no browser cookies)
 - [ ] Better error messages
 - [ ] More examples and screenshots
 
@@ -344,7 +308,7 @@ See [RELEASING.md](RELEASING.md) for release process documentation.
 
 Quick release:
 ```bash
-./release.sh 0.4.1
+./release.sh 0.5.0
 ```
 
 ## License
@@ -353,7 +317,5 @@ MIT - See [LICENSE](LICENSE) file for details.
 
 ## Acknowledgments
 
-- Uses [browser_cookie3](https://github.com/borisbabic/browser_cookie3) for
-  cookie extraction
-- Uses [curl_cffi](https://github.com/yifeikong/curl_cffi) for making
-  authenticated requests
+- Originally based on [NihilDigit/waybar-ai-usage](https://github.com/NihilDigit/waybar-ai-usage)
+- Uses Claude Code OAuth credentials for reliable, cookie-free authentication

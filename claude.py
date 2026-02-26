@@ -3,82 +3,107 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+import time
 
 from pathlib import Path
 
-from curl_cffi import requests
+import requests
 
-from common import format_eta, load_cookies, parse_window_percent, format_output, get_cached_or_fetch
+from common import format_eta, parse_window_percent, format_output, get_cached_or_fetch
 
 
 # ==================== Configuration ====================
 
-CLAUDE_DOMAIN = "claude.ai"
-
-BASE_HEADERS = {
-    "Referer": "https://claude.ai/chats",
-    "Origin": "https://claude.ai",
-    "Accept": "application/json, text/plain, */*",
-}
+CREDENTIALS_PATH = Path.home() / ".claude" / ".credentials.json"
+USAGE_URL = "https://api.anthropic.com/api/oauth/usage"
 
 # SVG icon path (unused in current version)
 SCRIPT_DIR = Path(__file__).parent
 ICON_PATH = SCRIPT_DIR / "assets" / "claude.svg"
 
 
-# ==================== Core Logic: Get Usage ====================
+# ==================== OAuth Token ====================
 
-def _fetch_claude_usage_uncached(browsers: list[str] | None = None) -> dict:
-    """Internal function to fetch Claude usage data without caching"""
-    try:
-        cookies, _browser = load_cookies(CLAUDE_DOMAIN, browsers)
-    except Exception as e:
-        raise RuntimeError(f"Failed to read cookies: {e}")
-
-    org_id = cookies.get("lastActiveOrg")
-    if not org_id:
+def _load_oauth_token() -> str:
+    """Load and validate the OAuth access token from Claude Code credentials."""
+    if not CREDENTIALS_PATH.exists():
         raise RuntimeError(
-            "Missing 'lastActiveOrg' in cookies.\n"
-            "Please refresh Claude page in browser or switch Organization."
+            f"Credentials not found: {CREDENTIALS_PATH}\n"
+            "Run Claude Code at least once to create OAuth credentials."
         )
 
-    url = f"https://{CLAUDE_DOMAIN}/api/organizations/{org_id}/usage"
+    try:
+        creds = json.loads(CREDENTIALS_PATH.read_text())
+    except Exception as e:
+        raise RuntimeError(f"Failed to parse credentials: {e}")
+
+    oauth = creds.get("claudeAiOauth")
+    if not oauth:
+        raise RuntimeError(
+            "No 'claudeAiOauth' entry in credentials.\n"
+            "Run Claude Code to set up OAuth authentication."
+        )
+
+    token = oauth.get("accessToken")
+    if not token:
+        raise RuntimeError("Missing accessToken in OAuth credentials.")
+
+    # Check expiry (expiresAt is milliseconds since epoch)
+    expires_at = oauth.get("expiresAt")
+    if expires_at and time.time() * 1000 > expires_at:
+        raise RuntimeError(
+            "OAuth token expired.\n"
+            "Reopen Claude Code to refresh the token."
+        )
+
+    return token
+
+
+# ==================== Core Logic: Get Usage ====================
+
+def _fetch_claude_usage_uncached() -> dict:
+    """Fetch Claude usage data via OAuth token."""
+    token = _load_oauth_token()
+
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "anthropic-beta": "oauth-2025-04-20",
+        "Accept": "application/json",
+    }
 
     # Retry once (2 attempts total)
     last_error = None
     for attempt in range(2):
         try:
-            resp = requests.get(
-                url,
-                cookies=cookies,
-                headers=BASE_HEADERS,
-                impersonate="chrome",
-                timeout=10
-            )
+            resp = requests.get(USAGE_URL, headers=headers, timeout=10)
 
+            if resp.status_code == 401:
+                raise RuntimeError(
+                    "401 Unauthorized: OAuth token rejected.\n"
+                    "Reopen Claude Code to refresh the token."
+                )
             if resp.status_code == 403:
-                raise RuntimeError("403 Forbidden: Try updating browser_cookie3 or refresh the page in browser.")
+                raise RuntimeError("403 Forbidden: Access denied to usage API.")
 
             resp.raise_for_status()
             return resp.json()
 
-        except Exception as e:
+        except requests.RequestException as e:
             last_error = e
-            if attempt == 0:  # First failure, retry
+            if attempt == 0:
                 continue
 
-    # Both attempts failed
     raise RuntimeError(f"Request failed: {last_error}")
 
 
-def get_claude_usage(browsers: list[str] | None = None) -> dict:
+def get_claude_usage() -> dict:
     """
-    Fetch Claude usage data using curl_cffi to impersonate Chrome.
+    Fetch Claude usage data using OAuth token.
 
     Uses file-based caching to prevent multiple Waybar instances (one per monitor)
     from making concurrent API requests that might be rate-limited.
     """
-    return get_cached_or_fetch("claude", lambda: _fetch_claude_usage_uncached(browsers))
+    return get_cached_or_fetch("claude", _fetch_claude_usage_uncached)
 
 
 # ==================== Output: CLI / Waybar ====================
@@ -245,11 +270,6 @@ def main() -> None:
         help="Output in JSON format for Waybar custom module",
     )
     parser.add_argument(
-        "--browser",
-        action="append",
-        help="Browser cookie source to try (repeatable). Example: --browser chromium",
-    )
-    parser.add_argument(
         "--format",
         type=str,
         help=(
@@ -271,11 +291,18 @@ def main() -> None:
     args = parser.parse_args()
 
     try:
-        usage = get_claude_usage(args.browser)
+        usage = get_claude_usage()
     except Exception as e:
         if args.waybar:
             err_msg = str(e)
-            short_err = "Auth Err" if "403" in err_msg else "Net Err"
+            if "expired" in err_msg.lower() or "401" in err_msg:
+                short_err = "Token Exp"
+            elif "403" in err_msg:
+                short_err = "Auth Err"
+            elif "not found" in err_msg.lower():
+                short_err = "No Creds"
+            else:
+                short_err = "Net Err"
             print(json.dumps({
                 "text": f"<span foreground='#ff5555'>󰜡 {short_err}</span>",
                 "tooltip": f"Error fetching Claude usage:\n{err_msg}",

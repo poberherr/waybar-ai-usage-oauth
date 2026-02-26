@@ -22,8 +22,6 @@ TEMPLATE_CONFIG = """// Waybar Configuration Example
     // After 'uv tool install waybar-ai-usage':
     // IMPORTANT: Use full path to work with systemd-launched Waybar
     "exec": "~/.local/bin/claude-usage --waybar",
-    // Example for Chromium:
-    // "exec": "~/.local/bin/claude-usage --waybar --browser chromium",
 
     // Or for development mode:
     // "exec": "uv run --directory /home/YOUR_USER/Codes/waybar-ai-usage python claude.py --waybar",
@@ -34,25 +32,6 @@ TEMPLATE_CONFIG = """// Waybar Configuration Example
     "tooltip": true,
     "on-click": "pkill -RTMIN+8 waybar",  // Click to refresh immediately
     "signal": 8  // Refresh when receiving signal 8
-  },
-
-  // OpenAI Codex CLI Usage Monitor
-  "custom/codex-usage": {
-    // After 'uv tool install waybar-ai-usage':
-    // IMPORTANT: Use full path to work with systemd-launched Waybar
-    "exec": "~/.local/bin/codex-usage --waybar",
-    // Example for Chromium:
-    // "exec": "~/.local/bin/codex-usage --waybar --browser chromium",
-
-    // Or for development mode:
-    // "exec": "uv run --directory /home/YOUR_USER/Codes/waybar-ai-usage python codex.py --waybar",
-
-    "return-type": "json",
-    "interval": 120,  // Refresh every 2 minutes
-    "format": "{}",
-    "tooltip": true,
-    "on-click": "pkill -RTMIN+9 waybar",  // Click to refresh immediately
-    "signal": 9  // Refresh when receiving signal 9
   }
 }
 """
@@ -87,37 +66,8 @@ TEMPLATE_STYLE = """/* Claude Code Usage Monitor Styling */
   color: #f38ba8;  /* Red: high usage (80-99%) */
 }
 
-/* OpenAI Codex CLI Usage Monitor Styling */
-#custom-codex-usage {
-  padding: 0 8px;
-  margin: 0 4px;
-  border-radius: 4px;
-  background: transparent;
-  font-family: 'Adwaita Mono', monospace;
-  font-size: 11px;
-  font-weight: 500;
-  transition: all 0.3s ease;
-}
-
-#custom-codex-usage:hover {
-  background: rgba(116, 170, 156, 0.15);
-}
-
-#custom-codex-usage.codex-low {
-  color: #a6e3a1;  /* Green: low usage */
-}
-
-#custom-codex-usage.codex-mid {
-  color: #f9e2af;  /* Yellow: medium usage */
-}
-
-#custom-codex-usage.codex-high {
-  color: #f38ba8;  /* Red: high usage */
-}
-
 /* Error state (network failures, auth errors, etc.) */
-#custom-claude-usage.critical,
-#custom-codex-usage.critical {
+#custom-claude-usage.critical {
   color: #ff5555;
   background: rgba(255, 85, 85, 0.1);
 }
@@ -204,7 +154,7 @@ def _remove_style_blocks(lines: list[str]) -> list[str]:
         start_idx, end_idx = region
         return lines[:start_idx] + lines[end_idx:]
 
-    targets = ("#custom-claude-usage", "#custom-codex-usage")
+    targets = ("#custom-claude-usage",)
     out: list[str] = []
     skipping = False
     depth = 0
@@ -253,9 +203,9 @@ def _read_template(path: Path, fallback: str) -> str:
 
 
 def _resolve_exec_base() -> str:
-    if Path("/usr/bin/claude-usage").exists() and Path("/usr/bin/codex-usage").exists():
+    if Path("/usr/bin/claude-usage").exists():
         return "/usr/bin"
-    if Path("~/.local/bin/claude-usage").expanduser().exists() and Path("~/.local/bin/codex-usage").expanduser().exists():
+    if Path("~/.local/bin/claude-usage").expanduser().exists():
         return "~/.local/bin"
     return DEFAULT_EXEC
 
@@ -268,15 +218,12 @@ def _remove_config(config_path: Path, style_path: Path, dry_run: bool) -> None:
         changed = False
         modules_left = config_data.get("modules-left")
         if isinstance(modules_left, list):
-            new_modules = [m for m in modules_left if m not in ("custom/claude-usage", "custom/codex-usage")]
+            new_modules = [m for m in modules_left if m != "custom/claude-usage"]
             if new_modules != modules_left:
                 config_data["modules-left"] = new_modules
                 changed = True
         if "custom/claude-usage" in config_data:
             config_data.pop("custom/claude-usage", None)
-            changed = True
-        if "custom/codex-usage" in config_data:
-            config_data.pop("custom/codex-usage", None)
             changed = True
 
         if changed:
@@ -309,7 +256,7 @@ def _remove_config(config_path: Path, style_path: Path, dry_run: bool) -> None:
         _print_done()
 
 
-def _apply_setup(config_path: Path, style_path: Path, browsers: list[str] | None, dry_run: bool) -> None:
+def _apply_setup(config_path: Path, style_path: Path, dry_run: bool) -> None:
     example_config = Path(__file__).with_name("waybar-config-example.jsonc")
     example_style = Path(__file__).with_name("waybar-style-example.css")
     style_lines = style_path.read_text().splitlines() if style_path.exists() else []
@@ -333,25 +280,13 @@ def _apply_setup(config_path: Path, style_path: Path, browsers: list[str] | None
         config_data["modules-left"] = modules_left
         changed_config = True
 
-    for name in ("custom/claude-usage", "custom/codex-usage"):
-        if name not in modules_left:
-            modules_left.append(name)
-            changed_config = True
+    if "custom/claude-usage" not in modules_left:
+        modules_left.append("custom/claude-usage")
+        changed_config = True
 
-    for key in ("custom/claude-usage", "custom/codex-usage"):
-        if key not in config_data and key in example_config_data:
-            config_data[key] = example_config_data[key]
-            changed_config = True
-
-    if browsers:
-        flags = " ".join(f"--browser {b}" for b in browsers)
-        for key in ("custom/claude-usage", "custom/codex-usage"):
-            entry = config_data.get(key)
-            if isinstance(entry, dict):
-                exec_cmd = entry.get("exec")
-                if isinstance(exec_cmd, str) and "--waybar" in exec_cmd and "--browser" not in exec_cmd:
-                    entry["exec"] = exec_cmd.replace("--waybar", f"--waybar {flags}")
-                    changed_config = True
+    if "custom/claude-usage" not in config_data and "custom/claude-usage" in example_config_data:
+        config_data["custom/claude-usage"] = example_config_data["custom/claude-usage"]
+        changed_config = True
 
     updated_style = _apply_style_region(style_lines, css_region)
 
@@ -444,11 +379,6 @@ def main() -> None:
     setup = subparsers.add_parser(
         "setup",
         help="Add Waybar config entries and styles (with backups)",
-    )
-    setup.add_argument(
-        "--browser",
-        action="append",
-        help="Browser cookie source to try (repeatable). Example: --browser chromium",
     )
     setup.add_argument(
         "--config",
@@ -544,7 +474,7 @@ def main() -> None:
             if not _confirm_changes([args.config.expanduser(), args.style.expanduser()]):
                 print("Aborted.")
                 return
-        _apply_setup(args.config.expanduser(), args.style.expanduser(), args.browser, args.dry_run)
+        _apply_setup(args.config.expanduser(), args.style.expanduser(), args.dry_run)
         return
     if args.command == "cleanup":
         if not args.yes and not args.dry_run:

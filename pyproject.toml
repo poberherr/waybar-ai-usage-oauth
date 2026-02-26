@@ -1,11 +1,11 @@
 [project]
 name = "waybar-ai-usage"
-version = "0.4.6"
-description = "Monitor Claude and ChatGPT API usage in Waybar via browser cookies"
+version = "0.5.0"
+description = "Monitor Claude Code usage in Waybar via Claude OAuth credentials"
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }
-keywords = ["waybar", "claude", "chatgpt", "openai", "usage", "monitor"]
+keywords = ["waybar", "claude", "usage", "monitor", "oauth"]
 authors = [
     { name = "NihilDigit" }
 ]
@@ -19,9 +19,8 @@ classifiers = [
     "Topic :: System :: Monitoring",
 ]
 dependencies = [
-    "browser-cookie3>=0.20.1",
-    "curl-cffi>=0.13.0",
     "json-five>=1.1.2",
+    "requests>=2.31.0",
 ]
 
 [project.urls]
@@ -31,7 +30,6 @@ Issues = "https://github.com/NihilDigit/waybar-ai-usage/issues"
 
 [project.scripts]
 claude-usage = "claude:main"
-codex-usage = "codex:main"
 waybar-ai-usage = "waybar_ai_usage:main"
 
 [build-system]
@@ -39,7 +37,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["claude.py", "codex.py", "common.py", "waybar_ai_usage.py"]
+packages = ["claude.py", "common.py", "waybar_ai_usage.py"]
 
 [dependency-groups]
 dev = []

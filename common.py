@@ -1,4 +1,4 @@
-"""Common utilities shared between claude.py and codex.py"""
+"""Common utilities for waybar-ai-usage."""
 from __future__ import annotations
 
 import json
@@ -6,12 +6,8 @@ import time
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Callable, Iterable, Mapping, Optional
+from typing import Callable, Mapping, Optional
 
-import browser_cookie3
-
-
-DEFAULT_BROWSERS = ("chrome", "chromium", "brave", "edge", "firefox", "helium")
 
 # Cache configuration
 CACHE_DIR = Path.home() / ".cache" / "waybar-ai-usage"
@@ -30,7 +26,7 @@ def get_cached_or_fetch(
     concurrent API requests that might be rate-limited.
 
     Args:
-        cache_name: Name of cache file (e.g., "claude", "codex")
+        cache_name: Name of cache file (e.g., "claude")
         fetch_func: Function to call to fetch fresh data
         ttl: Cache time-to-live in seconds
 
@@ -100,49 +96,6 @@ def get_cached_or_fetch(
             pass
 
 
-def helium(cookie_file=None, domain_name="", key_file=None):
-    """Returns a cookiejar of the cookies used by Helium browser.
-
-    Helium is a Chromium-based browser, so we use the chromium loader
-    with Helium's cookie file path.
-    """
-    import os
-    if cookie_file is None:
-        cookie_file = os.path.expanduser("~/.config/net.imput.helium/Default/Cookies")
-    return browser_cookie3.chromium(cookie_file=cookie_file, domain_name=domain_name, key_file=key_file)
-
-
-def load_cookies(domain: str, browsers: Iterable[str] | None = None) -> tuple[dict, str]:
-    """Load cookies for a domain from the first available browser in order."""
-    browsers = list(browsers or DEFAULT_BROWSERS)
-    errors: list[str] = []
-
-    for name in browsers:
-        # First check if we have a local implementation (e.g., helium)
-        loader = globals().get(name)
-        if loader is None:
-            # Fall back to browser_cookie3
-            loader = getattr(browser_cookie3, name, None)
-        if loader is None:
-            errors.append(f"{name}: unsupported by browser_cookie3")
-            continue
-
-        try:
-            cj = loader(domain_name=domain)
-            cookies = {c.name: c.value for c in cj}
-        except Exception as exc:
-            errors.append(f"{name}: {exc}")
-            continue
-
-        if cookies:
-            return cookies, name
-
-        errors.append(f"{name}: no cookies found")
-
-    detail = "; ".join(errors) if errors else "no browsers provided"
-    raise RuntimeError(f"Failed to read cookies for {domain}: {detail}")
-
-
 @dataclass
 class WindowUsage:
     """Usage information for a time window."""
@@ -164,22 +117,8 @@ def parse_window_percent(raw: Mapping[str, object] | None, key: str = "utilizati
     return WindowUsage(utilization=util_f, resets_at=resets)  # type: ignore[arg-type]
 
 
-def parse_window_direct(raw: Mapping[str, object] | None) -> WindowUsage:
-    """Parse window where used_percent is already 0-100 - used by ChatGPT."""
-    raw = raw or {}
-    used = raw.get("used_percent") or 0
-    reset_at = raw.get("reset_at")
-
-    try:
-        used_f = float(used)
-    except Exception:
-        used_f = 0.0
-
-    return WindowUsage(utilization=used_f, resets_at=reset_at)  # type: ignore[arg-type]
-
-
 def format_eta(reset_at: str | int | None) -> str:
-    """Format ETA from ISO string or Unix timestamp -> '4h19′' or '19′30″'."""
+    """Format ETA from ISO string or Unix timestamp -> '4h19m' or '19m30s'."""
     if not reset_at:
         return "0′00″"
 
@@ -241,10 +180,9 @@ def format_output(format_string: str, data: dict) -> str:
 
     Example:
         format_output("{icon} {5h_pct}% {time_icon} {5h_reset}", data)
-        format_output("{?5h_reset}{5h_pct}/{5h_reset}{/5h_reset}{?5h_reset&7d_reset} - {/}{?7d_reset}{7d_pct}/{7d_reset}{/7d_reset}", data)
     """
     import re
-    
+
     # Process conditional blocks with multiple variables: {?var1&var2&...}content{/}
     def replace_multi_conditional(match):
         var_names = match.group(1).split('&')
@@ -254,10 +192,10 @@ def format_output(format_string: str, data: dict) -> str:
         if all_valid:
             return content.format(**data)
         return ""
-    
+
     # Replace multi-variable conditional blocks first: {?var1&var2}content{/}
     result = re.sub(r'\{\?([^}]+&[^}]+)\}(.*?)\{/\}', replace_multi_conditional, format_string)
-    
+
     # Process single variable conditional blocks: {?var}content{/var}
     def replace_conditional(match):
         var_name = match.group(1)
@@ -267,9 +205,9 @@ def format_output(format_string: str, data: dict) -> str:
         if value and value != "Not started":
             return content.format(**data)
         return ""
-    
+
     # Replace single-variable conditional blocks: {?var}content{/var}
     result = re.sub(r'\{\?(\w+)\}(.*?)\{/\1\}', replace_conditional, result)
-    
+
     # Replace remaining placeholders
     return result.format(**data)

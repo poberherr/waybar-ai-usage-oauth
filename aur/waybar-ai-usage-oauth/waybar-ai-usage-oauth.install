@@ -1,6 +1,6 @@
 post_install() {
   cat <<'EOF'
-:: waybar-ai-usage installed
+:: waybar-ai-usage-oauth installed
    Before uninstalling, run: waybar-ai-usage cleanup
    After setup/cleanup, restart Waybar (e.g. pkill waybar && waybar &)
 EOF
@@ -12,7 +12,7 @@ post_upgrade() {
 
 pre_remove() {
   cat <<'EOF'
-:: waybar-ai-usage pre-remove
+:: waybar-ai-usage-oauth pre-remove
    If you previously ran setup, consider running:
      waybar-ai-usage cleanup
    to remove Waybar config entries/styles before uninstalling.

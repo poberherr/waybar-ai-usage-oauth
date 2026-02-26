@@ -33,7 +33,7 @@ No test suite exists. Manual testing with the above commands.
 ./release.sh 0.5.1   # Bumps version, tags, pushes to GitHub + AUR
 ```
 
-The script updates `pyproject.toml` and `aur/waybar-ai-usage/PKGBUILD`, creates a git tag, pushes, downloads the tarball to update PKGBUILD checksums, regenerates `.SRCINFO`, and pushes to AUR. See `RELEASING.md` for details.
+The script updates `pyproject.toml` and `aur/waybar-ai-usage-oauth/PKGBUILD`, creates a git tag, pushes, downloads the tarball to update PKGBUILD checksums, regenerates `.SRCINFO`, and pushes to AUR. See `RELEASING.md` for details.
 
 ## Key Details
 
@@ -51,7 +51,7 @@ The script updates `pyproject.toml` and `aur/waybar-ai-usage/PKGBUILD`, creates 
 - Cache uses file-based locking (`*.updating` marker files) to coordinate between concurrent Waybar processes
 - Auto-switches from 5h to 7d display when 7-day usage exceeds 80% (overridden by `--show-5h`)
 - Waybar error states show short labels: "Token Exp", "Auth Err", "No Creds", "Net Err"
-- Version tracked in `pyproject.toml` and `aur/waybar-ai-usage/PKGBUILD` — keep in sync
+- Version tracked in `pyproject.toml` and `aur/waybar-ai-usage-oauth/PKGBUILD` — keep in sync
 
 ## Dependencies
 

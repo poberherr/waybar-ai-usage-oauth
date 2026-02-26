@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Release automation script for waybar-ai-usage
+# Release automation script for waybar-ai-usage-oauth
 # Handles version bumping, GitHub releases, and AUR package updates
 #
 
@@ -8,10 +8,10 @@ set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PYPROJECT="${REPO_ROOT}/pyproject.toml"
-PKGBUILD="${REPO_ROOT}/aur/waybar-ai-usage/PKGBUILD"
-SRCINFO="${REPO_ROOT}/aur/waybar-ai-usage/.SRCINFO"
-GITHUB_REPO="NihilDigit/waybar-ai-usage"
-AUR_REPO="ssh://aur@aur.archlinux.org/waybar-ai-usage.git"
+PKGBUILD="${REPO_ROOT}/aur/waybar-ai-usage-oauth/PKGBUILD"
+SRCINFO="${REPO_ROOT}/aur/waybar-ai-usage-oauth/.SRCINFO"
+GITHUB_REPO="poberherr/waybar-ai-usage-oauth"
+AUR_REPO="ssh://aur@aur.archlinux.org/waybar-ai-usage-oauth.git"
 
 # Colors
 RED='\033[0;31m'
@@ -110,12 +110,14 @@ push_to_aur() {
     git clone "$AUR_REPO" "$aur_tmpdir"
 
     log_info "Copying files to AUR repository..."
-    cp "$PKGBUILD" "$SRCINFO" "$aur_tmpdir/"
+    local install_file
+    install_file="$(dirname "$PKGBUILD")/waybar-ai-usage-oauth.install"
+    cp "$PKGBUILD" "$SRCINFO" "$install_file" "$aur_tmpdir/"
 
     log_info "Committing to AUR..."
     (
         cd "$aur_tmpdir"
-        git add PKGBUILD .SRCINFO
+        git add PKGBUILD .SRCINFO waybar-ai-usage-oauth.install
         git commit -m "Update to $1"
         git push
     )
@@ -184,7 +186,7 @@ do_release() {
     log_success "Release ${new_version} completed successfully!"
     echo ""
     log_info "GitHub release: https://github.com/${GITHUB_REPO}/releases/tag/v${new_version}"
-    log_info "AUR package: https://aur.archlinux.org/packages/waybar-ai-usage"
+    log_info "AUR package: https://aur.archlinux.org/packages/waybar-ai-usage-oauth"
     echo ""
 }
 

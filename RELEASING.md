@@ -26,7 +26,7 @@ The script automatically executes the following steps:
 
 ### 1. Version Number Update
 - Update version in `pyproject.toml`
-- Update version in `aur/waybar-ai-usage/PKGBUILD`
+- Update version in `aur/waybar-ai-usage-oauth/PKGBUILD`
 - Reset `pkgrel` to 1
 
 ### 2. Create Git Commit and Tag
@@ -83,22 +83,22 @@ If manual release is needed, follow these steps:
 ```bash
 # 1. Update version numbers
 vim pyproject.toml  # Modify version field
-vim aur/waybar-ai-usage/PKGBUILD  # Modify pkgver field
+vim aur/waybar-ai-usage-oauth/PKGBUILD  # Modify pkgver field
 
 # 2. Commit and create tag
-git add pyproject.toml aur/waybar-ai-usage/PKGBUILD
+git add pyproject.toml aur/waybar-ai-usage-oauth/PKGBUILD
 git commit -m "chore: bump version to X.Y.Z"
 git tag -a vX.Y.Z -m "Release vX.Y.Z"
 git push origin main --tags
 
 # 3. Wait for GitHub to process, then update checksum
-curl -L "https://api.github.com/repos/NihilDigit/waybar-ai-usage/tarball/refs/tags/vX.Y.Z" \
-  -o /tmp/waybar-ai-usage-X.Y.Z.tar.gz
-sha256sum /tmp/waybar-ai-usage-X.Y.Z.tar.gz
+curl -L "https://api.github.com/repos/poberherr/waybar-ai-usage-oauth/tarball/refs/tags/vX.Y.Z" \
+  -o /tmp/waybar-ai-usage-oauth-X.Y.Z.tar.gz
+sha256sum /tmp/waybar-ai-usage-oauth-X.Y.Z.tar.gz
 # Manually update sha256sums in PKGBUILD
 
 # 4. Generate .SRCINFO
-cd aur/waybar-ai-usage
+cd aur/waybar-ai-usage-oauth
 makepkg --printsrcinfo > .SRCINFO
 
 # 5. Commit AUR update
@@ -108,9 +108,9 @@ git push
 
 # 6. Push to AUR
 cd /tmp
-git clone ssh://aur@aur.archlinux.org/waybar-ai-usage.git
-cp ~/path/to/PKGBUILD ~/path/to/.SRCINFO waybar-ai-usage/
-cd waybar-ai-usage
+git clone ssh://aur@aur.archlinux.org/waybar-ai-usage-oauth.git
+cp ~/path/to/PKGBUILD ~/path/to/.SRCINFO waybar-ai-usage-oauth/
+cd waybar-ai-usage-oauth
 git add PKGBUILD .SRCINFO
 git commit -m "Update to X.Y.Z"
 git push

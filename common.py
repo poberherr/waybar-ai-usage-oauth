@@ -103,11 +103,11 @@ class WindowUsage:
     resets_at: Optional[str | int]
 
 
-def parse_window_percent(raw: Mapping[str, object] | None, key: str = "utilization") -> WindowUsage:
-    """Parse window where Claude returns utilization as 0–100% (may be float)."""
+def parse_window_percent(raw: Mapping[str, object] | None, key: str = "utilization", reset_key: str = "resets_at") -> WindowUsage:
+    """Parse window where utilization is 0–100% (may be float)."""
     raw = raw or {}
     util = raw.get(key) or 0
-    resets = raw.get("resets_at")
+    resets = raw.get(reset_key)
 
     try:
         util_f = float(util)

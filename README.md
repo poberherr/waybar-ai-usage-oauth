@@ -1,16 +1,19 @@
 # Waybar AI Usage
 
-Monitor **Claude Code** usage directly in your Waybar status bar.
+Monitor **Claude Code** and **Codex CLI** usage directly in your Waybar status bar.
 
 ![showcase](https://github.com/user-attachments/assets/13e8a4a1-6778-484f-8a37-cba238aefea5)
 
-This tool displays your Claude Code usage limits in real-time using OAuth credentials from Claude Code — no browser cookies or API keys needed.
+This tool displays your AI coding tool usage limits in real-time using OAuth credentials — no browser cookies or API keys needed.
 
 ## What This Monitors
 
-- **Claude Code**: Claude's AI-powered code editor
+- **Claude Code**: Anthropic's AI coding assistant
   - 5-hour usage window
   - 7-day usage window
+- **Codex CLI**: OpenAI's AI coding assistant
+  - 5-hour usage window (primary)
+  - 7-day usage window (secondary)
 
 ## Features
 
@@ -18,13 +21,14 @@ This tool displays your Claude Code usage limits in real-time using OAuth creden
 - Countdown timer until quota reset
 - Color-coded warnings (green → yellow → red)
 - Click to refresh instantly
-- Uses Claude Code OAuth credentials — no browser cookies needed
+- Uses OAuth credentials from Claude Code and Codex CLI — no browser cookies needed
 - Special states: "Ready" (unused) and "Pause" (quota exhausted)
 - Auto-retry on network errors
 
 ## Prerequisites
 
-- **Claude Code** must have been run at least once (creates OAuth credentials at `~/.claude/.credentials.json`)
+- **Claude Code** must have been run at least once (creates OAuth credentials at `~/.claude/.credentials.json`) — for Claude module
+- **Codex CLI** must have been logged in via `codex --login` (creates OAuth credentials at `~/.codex/auth.json`) — for Codex module
 - **Python 3.11+**
 - **uv** package manager ([installation guide](https://docs.astral.sh/uv/getting-started/installation/))
 
@@ -84,15 +88,22 @@ waybar-ai-usage cleanup --yes
 # Claude usage (CLI output)
 claude-usage
 
-# Waybar JSON output
+# Claude Waybar JSON output
 claude-usage --waybar
+
+# Codex usage (CLI output)
+codex-usage
+
+# Codex Waybar JSON output
+codex-usage --waybar
 ```
 
 > Note: `setup`/`cleanup` will rewrite your Waybar config JSONC and may change formatting or remove comments. Backups are created before any write.
 
 In development mode:
 ```bash
-uv run python claude.py
+uv run python claude.py    # Claude
+uv run python codex.py     # Codex
 ```
 
 ### Waybar Integration
@@ -103,7 +114,7 @@ uv run python claude.py
 uv tool install waybar-ai-usage
 ```
 
-After installation, the command `claude-usage` will be available in your PATH.
+After installation, the commands `claude-usage` and `codex-usage` will be available in your PATH.
 
 #### Step 2: Run setup
 
@@ -248,11 +259,19 @@ The first example will display:
 
 ## How It Works
 
+**Claude module:**
 1. **OAuth Token**: Reads the OAuth access token from Claude Code's credentials (`~/.claude/.credentials.json`)
 2. **API Request**: Makes an authenticated request to Anthropic's usage API
 3. **Usage Parsing**: Extracts usage percentages and reset times from API responses
 4. **Waybar Output**: Formats data as JSON for Waybar's custom module
 5. **Auto-refresh**: Waybar polls every 2 minutes (configurable via `interval`)
+
+**Codex module:**
+1. **OAuth Token**: Reads the OAuth access token from Codex CLI's credentials (`~/.codex/auth.json`)
+2. **Token Refresh**: Automatically refreshes tokens older than 8 days, or on 401 responses
+3. **API Request**: Makes an authenticated request to OpenAI's usage API
+4. **Usage Parsing**: Extracts usage percentages and reset times from API responses
+5. **Waybar Output**: Formats data as JSON for Waybar's custom module
 
 ### Network Configuration
 
@@ -279,12 +298,18 @@ The first example will display:
 - The usage API may be temporarily unavailable
 - The tool has built-in retry (1 retry with 10s timeout)
 
+### Codex: "Refresh Err"
+
+- Token refresh failed — run `codex --login` to re-authenticate
+- If using an API key instead of OAuth, switch to OAuth with `codex --login`
+
 ## Project Structure
 
 ```
 waybar-ai-usage/
 ├── common.py                     # Shared utilities (caching, time formatting, output)
 ├── claude.py                     # Claude Code usage monitor (OAuth-based)
+├── codex.py                      # Codex CLI usage monitor (OAuth-based)
 ├── pyproject.toml                # Project metadata and dependencies
 ├── waybar_ai_usage.py            # Setup/cleanup helper tool
 ├── waybar-config-example.jsonc   # Template used by setup

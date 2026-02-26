@@ -33,3 +33,39 @@
   color: #ff5555;
   background: rgba(255, 85, 85, 0.1);
 }
+
+/* Codex CLI Usage Monitor Styling */
+#custom-codex-usage {
+  padding: 0 8px;
+  margin: 0 4px;
+  border-radius: 4px;
+  background: transparent;
+  font-family: 'Adwaita Mono', monospace;
+  font-size: 11px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+/* Hover effect: show clickable (OpenAI green) */
+#custom-codex-usage:hover {
+  background: rgba(16, 163, 127, 0.15);
+}
+
+/* Color-coded by usage level */
+#custom-codex-usage.codex-low {
+  color: #a6e3a1;  /* Green: low usage (0-49%) */
+}
+
+#custom-codex-usage.codex-mid {
+  color: #f9e2af;  /* Yellow: medium usage (50-79%) */
+}
+
+#custom-codex-usage.codex-high {
+  color: #f38ba8;  /* Red: high usage (80-99%) */
+}
+
+/* Error state (network failures, auth errors, etc.) */
+#custom-codex-usage.critical {
+  color: #ff5555;
+  background: rgba(255, 85, 85, 0.1);
+}

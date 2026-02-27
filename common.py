@@ -13,6 +13,10 @@ from typing import Callable, Mapping, Optional
 CACHE_DIR = Path.home() / ".cache" / "waybar-ai-usage"
 CACHE_TTL = 60  # Cache valid for 60 seconds
 
+# Window length constants (shared between claude.py and codex.py)
+WINDOW_5H_SECONDS = 18000   # 5 hours
+WINDOW_7D_SECONDS = 604800  # 7 days
+
 
 def get_cached_or_fetch(
     cache_name: str,

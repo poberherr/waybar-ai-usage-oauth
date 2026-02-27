@@ -11,7 +11,7 @@ from pathlib import Path
 
 import requests
 
-from common import format_eta, parse_window_percent, format_output, get_cached_or_fetch
+from common import format_eta, parse_window_percent, format_output, get_cached_or_fetch, WINDOW_5H_SECONDS, WINDOW_7D_SECONDS
 
 
 # ==================== Configuration ====================
@@ -241,22 +241,22 @@ def print_waybar(usage: dict, format_str: str | None = None, tooltip_format: str
         target = fh
         target_raw = fh_raw
         win_name = "5h"
-        window_length = 18000  # 5 hours in seconds
+        window_length = WINDOW_5H_SECONDS
     elif sd.utilization >= 100:
         target = sd
         target_raw = sd_raw
         win_name = "7d"
-        window_length = 604800
+        window_length = WINDOW_7D_SECONDS
     elif sd.utilization > 80:
         target = sd
         target_raw = sd_raw
         win_name = "7d"
-        window_length = 604800
+        window_length = WINDOW_7D_SECONDS
     else:
         target = fh
         target_raw = fh_raw
         win_name = "5h"
-        window_length = 18000
+        window_length = WINDOW_5H_SECONDS
 
     pct = int(round(target.utilization))
 
@@ -278,7 +278,7 @@ def print_waybar(usage: dict, format_str: str | None = None, tooltip_format: str
             reset_after = int((reset_dt - now).total_seconds())
 
             is_unused = (reset_after >= window_length - 1)
-        except Exception:
+        except (ValueError, TypeError, OSError):
             pass
 
     # Determine status

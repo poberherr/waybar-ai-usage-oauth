@@ -9,17 +9,13 @@ from pathlib import Path
 
 import requests
 
-from common import format_eta, parse_window_percent, format_output, get_cached_or_fetch
+from common import format_eta, parse_window_percent, format_output, get_cached_or_fetch, WINDOW_5H_SECONDS, WINDOW_7D_SECONDS
 
 
 # ==================== Configuration ====================
 
 CREDENTIALS_PATH = Path.home() / ".claude" / ".credentials.json"
 USAGE_URL = "https://api.anthropic.com/api/oauth/usage"
-
-# SVG icon path (unused in current version)
-SCRIPT_DIR = Path(__file__).parent
-ICON_PATH = SCRIPT_DIR / "assets" / "claude.svg"
 
 
 # ==================== OAuth Token ====================
@@ -147,25 +143,25 @@ def print_waybar(usage: dict, format_str: str | None = None, tooltip_format: str
         target = fh
         target_raw = fh_raw
         win_name = "5h"
-        window_length = 18000  # 5 hours in seconds
+        window_length = WINDOW_5H_SECONDS
     elif sd.utilization >= 100:
         # 7-day window exhausted
         target = sd
         target_raw = sd_raw
         win_name = "7d"
-        window_length = 604800
+        window_length = WINDOW_7D_SECONDS
     elif sd.utilization > 80:
         # 7-day window high usage
         target = sd
         target_raw = sd_raw
         win_name = "7d"
-        window_length = 604800  # 7 days in seconds
+        window_length = WINDOW_7D_SECONDS
     else:
         # Default to 5h window
         target = fh
         target_raw = fh_raw
         win_name = "5h"
-        window_length = 18000  # 5 hours in seconds
+        window_length = WINDOW_5H_SECONDS
 
     pct = int(round(target.utilization))
 
@@ -189,7 +185,7 @@ def print_waybar(usage: dict, format_str: str | None = None, tooltip_format: str
 
             # If reset time is close to window length (allow 1s error), consider it unused
             is_unused = (reset_after >= window_length - 1)
-        except Exception:
+        except (ValueError, TypeError, OSError):
             pass
 
     # Determine status

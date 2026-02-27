@@ -11,7 +11,7 @@ Waybar modules that monitor Claude Code and Codex CLI usage (5h/7d windows) via 
 - **`claude.py`** — Claude Code usage monitor. Reads OAuth token from `~/.claude/.credentials.json`, calls `https://api.anthropic.com/api/oauth/usage` with Bearer token + `anthropic-beta: oauth-2025-04-20` header. Outputs CLI or Waybar JSON. Entry point: `claude-usage`.
 - **`codex.py`** — Codex CLI usage monitor. Reads OAuth token from `~/.codex/auth.json`, calls `https://chatgpt.com/backend-api/wham/usage`. Handles token refresh via `auth.openai.com/oauth/token`. Outputs CLI or Waybar JSON. Entry point: `codex-usage`.
 - **`common.py`** — Shared utilities: file-based caching (`~/.cache/waybar-ai-usage/`), `WindowUsage` dataclass, time formatting, conditional template engine (`format_output` supports `{?var}...{/var}` conditionals).
-- **`waybar_ai_usage.py`** — Setup/cleanup/restore helper that patches user's Waybar config.jsonc and style.css (with timestamped `.bak.*` backups). Uses `json-five` for JSONC parsing. Entry point: `waybar-ai-usage`. Currently Claude-only.
+- **`waybar_ai_usage.py`** — Setup/cleanup/restore helper that patches user's Waybar config.jsonc and style.css (with timestamped `.bak.*` backups). Uses `json-five` for JSONC parsing. Entry point: `waybar-ai-usage`.
 - **`pyproject.toml`** — Hatchling build. Wheel includes all four `.py` files.
 
 ## Development

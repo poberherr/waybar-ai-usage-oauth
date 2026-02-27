@@ -32,6 +32,23 @@ TEMPLATE_CONFIG = """// Waybar Configuration Example
     "tooltip": true,
     "on-click": "pkill -RTMIN+8 waybar",  // Click to refresh immediately
     "signal": 8  // Refresh when receiving signal 8
+  },
+
+  // Codex CLI Usage Monitor
+  "custom/codex-usage": {
+    // After 'uv tool install waybar-ai-usage':
+    // IMPORTANT: Use full path to work with systemd-launched Waybar
+    "exec": "~/.local/bin/codex-usage --waybar",
+
+    // Or for development mode:
+    // "exec": "uv run --directory /home/YOUR_USER/Codes/waybar-ai-usage python codex.py --waybar",
+
+    "return-type": "json",
+    "interval": 120,  // Refresh every 2 minutes
+    "format": "{}",
+    "tooltip": true,
+    "on-click": "pkill -RTMIN+9 waybar",  // Click to refresh immediately
+    "signal": 9  // Refresh when receiving signal 9
   }
 }
 """
@@ -68,6 +85,42 @@ TEMPLATE_STYLE = """/* Claude Code Usage Monitor Styling */
 
 /* Error state (network failures, auth errors, etc.) */
 #custom-claude-usage.critical {
+  color: #ff5555;
+  background: rgba(255, 85, 85, 0.1);
+}
+
+/* Codex CLI Usage Monitor Styling */
+#custom-codex-usage {
+  padding: 0 8px;
+  margin: 0 4px;
+  border-radius: 4px;
+  background: transparent;
+  font-family: 'Adwaita Mono', monospace;
+  font-size: 11px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+/* Hover effect: show clickable (OpenAI green) */
+#custom-codex-usage:hover {
+  background: rgba(16, 163, 127, 0.15);
+}
+
+/* Color-coded by usage level */
+#custom-codex-usage.codex-low {
+  color: #a6e3a1;  /* Green: low usage (0-49%) */
+}
+
+#custom-codex-usage.codex-mid {
+  color: #f9e2af;  /* Yellow: medium usage (50-79%) */
+}
+
+#custom-codex-usage.codex-high {
+  color: #f38ba8;  /* Red: high usage (80-99%) */
+}
+
+/* Error state (network failures, auth errors, etc.) */
+#custom-codex-usage.critical {
   color: #ff5555;
   background: rgba(255, 85, 85, 0.1);
 }
@@ -109,7 +162,6 @@ def _find_style_region(lines: list[str]) -> tuple[int, int] | None:
             start_idx = i
         if end_marker in line:
             end_idx = i
-            break
 
     if start_idx is None or end_idx is None:
         return None
@@ -154,7 +206,7 @@ def _remove_style_blocks(lines: list[str]) -> list[str]:
         start_idx, end_idx = region
         return lines[:start_idx] + lines[end_idx:]
 
-    targets = ("#custom-claude-usage",)
+    targets = ("#custom-claude-usage", "#custom-codex-usage")
     out: list[str] = []
     skipping = False
     depth = 0
@@ -203,10 +255,11 @@ def _read_template(path: Path, fallback: str) -> str:
 
 
 def _resolve_exec_base() -> str:
-    if Path("/usr/bin/claude-usage").exists():
-        return "/usr/bin"
-    if Path("~/.local/bin/claude-usage").expanduser().exists():
-        return "~/.local/bin"
+    for binary in ("claude-usage", "codex-usage"):
+        if Path(f"/usr/bin/{binary}").exists():
+            return "/usr/bin"
+        if Path(f"~/.local/bin/{binary}").expanduser().exists():
+            return "~/.local/bin"
     return DEFAULT_EXEC
 
 
@@ -217,14 +270,16 @@ def _remove_config(config_path: Path, style_path: Path, dry_run: bool) -> None:
         config_data = _load_json5(config_path)
         changed = False
         modules_left = config_data.get("modules-left")
+        ai_modules = {"custom/claude-usage", "custom/codex-usage"}
         if isinstance(modules_left, list):
-            new_modules = [m for m in modules_left if m != "custom/claude-usage"]
+            new_modules = [m for m in modules_left if m not in ai_modules]
             if new_modules != modules_left:
                 config_data["modules-left"] = new_modules
                 changed = True
-        if "custom/claude-usage" in config_data:
-            config_data.pop("custom/claude-usage", None)
-            changed = True
+        for mod in ai_modules:
+            if mod in config_data:
+                config_data.pop(mod)
+                changed = True
 
         if changed:
             if dry_run:
@@ -280,13 +335,14 @@ def _apply_setup(config_path: Path, style_path: Path, dry_run: bool) -> None:
         config_data["modules-left"] = modules_left
         changed_config = True
 
-    if "custom/claude-usage" not in modules_left:
-        modules_left.append("custom/claude-usage")
-        changed_config = True
+    for mod in ("custom/claude-usage", "custom/codex-usage"):
+        if mod not in modules_left:
+            modules_left.append(mod)
+            changed_config = True
 
-    if "custom/claude-usage" not in config_data and "custom/claude-usage" in example_config_data:
-        config_data["custom/claude-usage"] = example_config_data["custom/claude-usage"]
-        changed_config = True
+        if mod not in config_data and mod in example_config_data:
+            config_data[mod] = example_config_data[mod]
+            changed_config = True
 
     updated_style = _apply_style_region(style_lines, css_region)
 

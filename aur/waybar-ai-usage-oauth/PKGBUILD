@@ -1,7 +1,7 @@
 # Maintainer: Patrick Oberherr <patrick@oberherr.at>
 
 pkgname=waybar-ai-usage-oauth
-pkgver=0.5.0
+pkgver=0.5.1
 pkgrel=1
 pkgdesc='Monitor Claude Code and Codex CLI usage in Waybar (OAuth-based)'
 arch=('any')

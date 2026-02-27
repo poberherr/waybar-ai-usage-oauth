@@ -1,6 +1,6 @@
 [project]
 name = "waybar-ai-usage"
-version = "0.5.0"
+version = "0.5.1"
 description = "Monitor Claude Code and Codex CLI usage in Waybar via OAuth credentials"
 readme = "README.md"
 requires-python = ">=3.11"
